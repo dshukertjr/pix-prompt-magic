@@ -5,32 +5,32 @@
 
 @layer base {
   :root {
-    --background: 260 50% 4%;
-    --foreground: 240 10% 95%;
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
 
-    --card: 260 30% 10%;
-    --card-foreground: 240 10% 95%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
 
-    --popover: 260 30% 10%;
-    --popover-foreground: 240 10% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
     --primary: 270 100% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 260 20% 20%;
-    --secondary-foreground: 240 10% 95%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
 
-    --muted: 260 20% 20%;
-    --muted-foreground: 240 10% 70%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
     --accent: 280 70% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 260 30% 20%;
-    --input: 260 30% 16%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
     --ring: 270 100% 60%;
 
     --radius: 0.75rem;
@@ -43,28 +43,28 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    background-image: linear-gradient(to bottom right, hsl(260, 50%, 4%), hsl(280, 50%, 8%));
+    background-image: linear-gradient(to bottom right, hsl(0, 0%, 98%), hsl(0, 0%, 95%));
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-md border border-white/10 shadow-xl rounded-2xl;
+    @apply bg-white/80 backdrop-blur-md border border-gray-200 shadow-md rounded-2xl;
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-purple-400 via-violet-400 to-fuchsia-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent;
   }
 }
 
 .image-upload-drop {
-  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border: 2px dashed rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
 .image-upload-drop.active {
   border-color: rgba(124, 58, 237, 0.8);
-  background-color: rgba(124, 58, 237, 0.1);
+  background-color: rgba(124, 58, 237, 0.05);
 }
 
 .upload-animation {
