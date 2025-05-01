@@ -77,13 +77,13 @@ const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({ onImagesSelected }) =
           onChange={handleFileSelect} 
         />
         <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-violet-600/30 flex items-center justify-center">
-            <Upload className={`w-8 h-8 text-violet-300 ${isDragging ? 'upload-animation' : ''}`} />
+          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+            <Upload className={`w-8 h-8 text-gray-500 ${isDragging ? 'upload-animation' : ''}`} />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-white mb-2">Upload Images</h3>
-            <p className="text-sm text-gray-400">
-              Drag & drop images or <span className="text-violet-400">browse</span>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Upload Images</h3>
+            <p className="text-sm text-gray-500">
+              Drag & drop images or <span className="text-gray-700">browse</span>
             </p>
             <p className="text-xs text-gray-500 mt-2">
               PNG, JPG, WEBP, SVG up to 10MB
@@ -96,7 +96,7 @@ const ImageUploadArea: React.FC<ImageUploadAreaProps> = ({ onImagesSelected }) =
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
           {uploadedImages.map((image, index) => (
             <div key={index} className="relative group">
-              <div className="aspect-square rounded-lg overflow-hidden bg-gray-800">
+              <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                 <img 
                   src={URL.createObjectURL(image)} 
                   alt={`Uploaded ${index}`} 
