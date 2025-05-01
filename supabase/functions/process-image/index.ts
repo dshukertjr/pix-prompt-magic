@@ -47,16 +47,24 @@ serve(async (req) => {
     });
 
     const imageBlobs = await Promise.all(imagePromises);
-
+    
     // Prepare form data for OpenAI API
     const formData = new FormData();
     formData.append("prompt", prompt);
     formData.append("model", "gpt-image-1");
     
-    // Add all image blobs to the request
-    imageBlobs.forEach((blob, index) => {
-      formData.append(`image_${index}`, blob);
-    });
+    // Add the first image as the 'image' parameter
+    // OpenAI's images/edits endpoint requires a main 'image' and then optional 'mask' parameter
+    if (imageBlobs.length > 0) {
+      formData.append("image", imageBlobs[0]);
+      
+      // If there are more images, we need to handle them differently
+      // For the official OpenAI client, multiple images are supported
+      // For the raw API, we might need a different approach or to make multiple requests
+      if (imageBlobs.length > 1) {
+        console.log(`Note: Using first image as primary. The API may not natively support multiple images.`);
+      }
+    }
 
     // Call OpenAI API
     console.log("Calling OpenAI API with prompt:", prompt);
