@@ -1,6 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js";
 import OpenAI, { toFile } from "jsr:@openai/openai";
-import * as fs from "node:fs";
 
 // Configure COS headers for the function
 const corsHeaders = {
@@ -40,22 +39,7 @@ Deno.serve(async (req) => {
 
     // Get the images from the provided URLs
     const imagePromises = imageUrls.map(async (url: string) => {
-      console.log("Fetching image from:", url);
-      // Add error handling and retry logic for fetch
-      let response;
-      try {
-        response = await fetch(url, {
-          headers: {
-            "Accept": "image/*",
-          },
-          redirect: "follow",
-        });
-      } catch (error) {
-        console.error(`Error fetching image from ${url}:`, error);
-        throw new Error(
-          `Error sending request for url ${url}: ${error}`,
-        );
-      }
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch image from ${url}`);
       }
@@ -78,7 +62,6 @@ Deno.serve(async (req) => {
       model: "gpt-image-1",
       image: images,
       prompt: prompt,
-      response_format: "b64_json",
     });
 
     if (!response.data || response.data.length === 0) {
@@ -105,7 +88,7 @@ Deno.serve(async (req) => {
     const randomId = crypto.randomUUID();
     const outputImageName = `generated-${timestamp}-${randomId}.png`;
 
-    const { data: uploadData, error: uploadError } = await supabaseClient
+    const { error: uploadError } = await supabaseClient
       .storage
       .from("generated-images")
       .upload(outputImageName, generatedImageBlob, {
