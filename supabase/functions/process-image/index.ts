@@ -1,5 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js";
-import OpenAI, { toFile } from "jsr:@openai/openai";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import OpenAI, { toFile } from "jsr:@openai/openai@4.96.2";
 
 // Configure COS headers for the function
 const corsHeaders = {
