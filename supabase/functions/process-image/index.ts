@@ -51,14 +51,16 @@ serve(async (req) => {
     // Prepare form data for OpenAI API
     const formData = new FormData();
     formData.append("prompt", prompt);
-    formData.append("model", "gpt-4-vision-preview");
+    formData.append("model", "gpt-image-1");
+    
+    // Add all image blobs to the request
     imageBlobs.forEach((blob, index) => {
       formData.append(`image_${index}`, blob);
     });
 
     // Call OpenAI API
     console.log("Calling OpenAI API with prompt:", prompt);
-    const openaiResponse = await fetch("https://api.openai.com/v1/images/generations", {
+    const openaiResponse = await fetch("https://api.openai.com/v1/images/edits", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${openaiApiKey}`,
@@ -79,11 +81,26 @@ serve(async (req) => {
     }
 
     const openaiData = await openaiResponse.json();
-    const generatedImageUrl = openaiData.data[0].url;
     
-    // Download the generated image
-    const generatedImageResponse = await fetch(generatedImageUrl);
-    const generatedImageBlob = await generatedImageResponse.blob();
+    // Check if we got b64_json data
+    let generatedImageBlob: Blob;
+    if (openaiData.data && openaiData.data[0].b64_json) {
+      // Convert base64 to blob
+      const base64Data = openaiData.data[0].b64_json;
+      const binaryData = atob(base64Data);
+      const uint8Array = new Uint8Array(binaryData.length);
+      for (let i = 0; i < binaryData.length; i++) {
+        uint8Array[i] = binaryData.charCodeAt(i);
+      }
+      generatedImageBlob = new Blob([uint8Array], { type: "image/png" });
+    } else if (openaiData.data && openaiData.data[0].url) {
+      // Download the generated image from URL
+      const generatedImageUrl = openaiData.data[0].url;
+      const generatedImageResponse = await fetch(generatedImageUrl);
+      generatedImageBlob = await generatedImageResponse.blob();
+    } else {
+      throw new Error("No image data received from OpenAI API");
+    }
 
     // Upload the generated image to Supabase Storage
     const supabaseClient = createClient(
