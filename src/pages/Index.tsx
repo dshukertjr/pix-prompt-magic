@@ -5,22 +5,50 @@ import ImageUploadArea from '@/components/ImageUploadArea';
 import PromptInput from '@/components/PromptInput';
 import GenerateButton from '@/components/GenerateButton';
 import ImagePreview from '@/components/ImagePreview';
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
 
   const handleImagesSelected = (images: File[]) => {
     setSelectedImages(images);
+    // Reset previous uploaded image URLs when new images are selected
+    setUploadedImageUrls([]);
   };
 
   const handlePromptChange = (value: string) => {
     setPrompt(value);
   };
 
-  const handleGenerate = () => {
+  const uploadImagesToSupabase = async (files: File[]) => {
+    const uploadPromises = files.map(async (file) => {
+      const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+      
+      const { data, error } = await supabase.storage
+        .from('user-images')
+        .upload(fileName, file);
+        
+      if (error) {
+        console.error("Error uploading file:", error);
+        throw new Error(`Failed to upload ${file.name}`);
+      }
+      
+      // Get the public URL for the uploaded file
+      const { data: { publicUrl } } = supabase.storage
+        .from('user-images')
+        .getPublicUrl(fileName);
+        
+      return publicUrl;
+    });
+    
+    return await Promise.all(uploadPromises);
+  };
+
+  const handleGenerate = async () => {
     if (selectedImages.length === 0) {
       toast.error("Please upload at least one image");
       return;
@@ -31,16 +59,45 @@ const Index = () => {
       return;
     }
     
-    // Simulate generation process
     setIsGenerating(true);
     
-    // This would be replaced with actual API call in a real implementation
-    setTimeout(() => {
-      setIsGenerating(false);
-      // For demo purposes, we'll use the first uploaded image as the "generated" result
-      setGeneratedImage(URL.createObjectURL(selectedImages[0]));
+    try {
+      // First, upload the selected images to Supabase Storage
+      let imageUrls: string[] = uploadedImageUrls;
+      
+      if (imageUrls.length === 0) {
+        toast.info("Uploading images...");
+        imageUrls = await uploadImagesToSupabase(selectedImages);
+        setUploadedImageUrls(imageUrls);
+      }
+      
+      // Then call our edge function with the image URLs and prompt
+      toast.info("Generating image...");
+      
+      const { data, error } = await supabase.functions.invoke('process-image', {
+        body: { 
+          prompt,
+          imageUrls
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message || "Error calling process-image function");
+      }
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      // Set the generated image URL
+      setGeneratedImage(data.generatedImageUrl);
       toast.success("Image generated successfully!");
-    }, 3000);
+    } catch (error) {
+      console.error("Error during image generation:", error);
+      toast.error(error.message || "Failed to generate image");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
