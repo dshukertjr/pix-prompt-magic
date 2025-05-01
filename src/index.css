@@ -14,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 270 100% 60%;
+    --primary: 220 13% 28%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 4.8% 95.9%;
@@ -23,7 +23,7 @@
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 280 70% 60%;
+    --accent: 220 13% 28%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -31,9 +31,9 @@
 
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 270 100% 60%;
+    --ring: 220 13% 28%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
 }
 
@@ -49,11 +49,11 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-gray-200 shadow-md rounded-2xl;
+    @apply bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-lg;
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-purple-600 via-violet-600 to-fuchsia-600 bg-clip-text text-transparent;
+    @apply text-gray-700;
   }
 }
 
@@ -63,8 +63,8 @@
 }
 
 .image-upload-drop.active {
-  border-color: rgba(124, 58, 237, 0.8);
-  background-color: rgba(124, 58, 237, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .upload-animation {
@@ -87,5 +87,5 @@
 }
 
 .generate-button-glow:hover {
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }

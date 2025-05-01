@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from "sonner";
 import ImageUploadArea from '@/components/ImageUploadArea';
@@ -101,20 +100,11 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col py-6 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl w-full mx-auto">
-        <header className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-4">
-            Pix Prompt Magic
-          </h1>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Transform your images using AI. Upload, describe, and create!
-          </p>
-        </header>
-
-        <main className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <main className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="glass-card p-6">
-            <div className="space-y-8">
+            <div className="space-y-6">
               <ImageUploadArea onImagesSelected={handleImagesSelected} />
               
               <div className="pt-4">
