@@ -1,17 +1,15 @@
+import { createClient } from "npm:@supabase/supabase-js";
+import OpenAI, { toFile } from "jsr:@openai/openai";
+import * as fs from "node:fs";
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
-
-// Configure CORS headers for the function
+// Configure COS headers for the function
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-// Get OpenAI API key from environment variables
-const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -20,26 +18,44 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, imageUrls } = await req.json();
+    const { prompt, imageUrls }: { prompt: string; imageUrls: string[] } =
+      await req.json();
 
     if (!prompt || !imageUrls || imageUrls.length === 0) {
       return new Response(
-        JSON.stringify({ error: "Prompt and at least one image URL are required" }),
+        JSON.stringify({
+          error: "Prompt and at least one image URL are required",
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
-    // Create a unique identifier for this generation
-    const timestamp = new Date().toISOString();
-    const randomId = crypto.randomUUID();
-    const outputImageName = `generated-${timestamp}-${randomId}.png`;
+    // Create OpenAI client
+    const openai = new OpenAI({
+      apiKey: Deno.env.get("OPENAI_API_KEY"),
+    });
 
     // Get the images from the provided URLs
     const imagePromises = imageUrls.map(async (url: string) => {
-      const response = await fetch(url);
+      console.log("Fetching image from:", url);
+      // Add error handling and retry logic for fetch
+      let response;
+      try {
+        response = await fetch(url, {
+          headers: {
+            "Accept": "image/*",
+          },
+          redirect: "follow",
+        });
+      } catch (error) {
+        console.error(`Error fetching image from ${url}:`, error);
+        throw new Error(
+          `Error sending request for url ${url}: ${error}`,
+        );
+      }
       if (!response.ok) {
         throw new Error(`Failed to fetch image from ${url}`);
       }
@@ -47,74 +63,47 @@ serve(async (req) => {
     });
 
     const imageBlobs = await Promise.all(imagePromises);
-    
-    // Prepare form data for OpenAI API
-    const formData = new FormData();
-    formData.append("prompt", prompt);
-    formData.append("model", "gpt-image-1");
-    
-    // Add the first image as the 'image' parameter
-    // OpenAI's images/edits endpoint requires a main 'image' and then optional 'mask' parameter
-    if (imageBlobs.length > 0) {
-      formData.append("image", imageBlobs[0]);
-      
-      // If there are more images, we need to handle them differently
-      // For the official OpenAI client, multiple images are supported
-      // For the raw API, we might need a different approach or to make multiple requests
-      if (imageBlobs.length > 1) {
-        console.log(`Note: Using first image as primary. The API may not natively support multiple images.`);
-      }
-    }
 
-    // Call OpenAI API
+    const images = await Promise.all(
+      imageBlobs.map(async (blob, index) =>
+        await toFile(blob, `image-${index}.png`, {
+          type: blob.type || "image/png",
+        })
+      ),
+    );
+
+    // Call OpenAI API using the client
     console.log("Calling OpenAI API with prompt:", prompt);
-    const openaiResponse = await fetch("https://api.openai.com/v1/images/edits", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openaiApiKey}`,
-      },
-      body: formData,
+    const response = await openai.images.edit({
+      model: "gpt-image-1",
+      image: images,
+      prompt: prompt,
+      response_format: "b64_json",
     });
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json();
-      console.error("OpenAI API error:", errorData);
-      return new Response(
-        JSON.stringify({ error: "Error from OpenAI API", details: errorData }),
-        {
-          status: openaiResponse.status,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    const openaiData = await openaiResponse.json();
-    
-    // Check if we got b64_json data
-    let generatedImageBlob: Blob;
-    if (openaiData.data && openaiData.data[0].b64_json) {
-      // Convert base64 to blob
-      const base64Data = openaiData.data[0].b64_json;
-      const binaryData = atob(base64Data);
-      const uint8Array = new Uint8Array(binaryData.length);
-      for (let i = 0; i < binaryData.length; i++) {
-        uint8Array[i] = binaryData.charCodeAt(i);
-      }
-      generatedImageBlob = new Blob([uint8Array], { type: "image/png" });
-    } else if (openaiData.data && openaiData.data[0].url) {
-      // Download the generated image from URL
-      const generatedImageUrl = openaiData.data[0].url;
-      const generatedImageResponse = await fetch(generatedImageUrl);
-      generatedImageBlob = await generatedImageResponse.blob();
-    } else {
+    if (!response.data || response.data.length === 0) {
       throw new Error("No image data received from OpenAI API");
     }
+
+    // Convert base64 to blob
+    const base64Data = response.data[0].b64_json!;
+    const binaryData = atob(base64Data);
+    const uint8Array = new Uint8Array(binaryData.length);
+    for (let i = 0; i < binaryData.length; i++) {
+      uint8Array[i] = binaryData.charCodeAt(i);
+    }
+    const generatedImageBlob = new Blob([uint8Array], { type: "image/png" });
 
     // Upload the generated image to Supabase Storage
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") || "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "",
     );
+
+    // Create a unique identifier for this generation
+    const timestamp = new Date().toISOString();
+    const randomId = crypto.randomUUID();
+    const outputImageName = `generated-${timestamp}-${randomId}.png`;
 
     const { data: uploadData, error: uploadError } = await supabaseClient
       .storage
@@ -127,17 +116,20 @@ serve(async (req) => {
     if (uploadError) {
       console.error("Supabase Storage upload error:", uploadError);
       return new Response(
-        JSON.stringify({ error: "Failed to upload generated image to storage" }),
+        JSON.stringify({
+          error: "Failed to upload generated image to storage",
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        },
       );
     }
 
     // Get the public URL for the uploaded image
-    const { data: { publicUrl } } = supabaseClient
-      .storage
+    const {
+      data: { publicUrl },
+    } = supabaseClient.storage
       .from("generated-images")
       .getPublicUrl(outputImageName);
 
@@ -149,16 +141,18 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Error processing image:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Unknown error occurred" }),
+      JSON.stringify({
+        error: (error as Error)?.message || "Unknown error occurred",
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });
