@@ -1,73 +1,86 @@
-# Welcome to your Lovable project
+# ✨ OpenAI Image Editor
 
-## Project info
+An image editor app that uses the [GPT Image model from OpenAI](https://platform.openai.com/docs/guides/image-generation?image-generation-model=gpt-image-1) to edit images.
 
-**URL**: https://lovable.dev/projects/c6576f1c-ac9f-4517-abda-a2f02b19f410
+## 🚀 Features
 
-## How can I edit this code?
+- Upload multiple images for AI processing
+- Provide text prompts to guide image transformations
+- Delegate image generation to OpenAI via Supabase Edge Function
+- Store source and generated images in Supabase Storage
+- Modern, responsive UI built with React and Tailwind CSS
 
-There are several ways of editing your application.
+## 🔧 Tech Stack
 
-**Use Lovable**
+- **Frontend**: React, TypeScript, TailwindCSS, Shadcn/UI
+- **Backend**: Supabase Edge Functions, Supabase Storage
+- **AI**: OpenAI API (GPT-Image model)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c6576f1c-ac9f-4517-abda-a2f02b19f410) and start prompting.
+## 🛠️ Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v18+)
+- Supabase account
+- OpenAI API key
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Environment Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. Clone the repository:
 
-Follow these steps:
+   ```bash
+   git clone https://github.com/yourusername/pix-prompt-magic.git
+   cd pix-prompt-magic
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+2. Install dependencies:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+   ```bash
+   npm install
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Copy the `.env.example` file and rename it to `.env` in the root directory with the following variables:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+   ```
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. Set up Supabase Edge Function environment variables:
+
+   ```bash
+   supabase secrets set OPENAI_API_KEY=your_openai_api_key
+   ```
+
+5. Run the database migrations to set up the Supabase environment:
+
+   ```bash
+   supabase migration up
+   ```
+
+   This will create the required storage buckets:
+
+   - `user-images` - for uploaded source images
+   - `generated-images` - for AI-generated results
+
+### Development
+
+Start the development server for the frontend:
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Deploy the Edge Function to Supabase:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+supabase functions deploy process-image
+```
 
-**Use GitHub Codespaces**
+## 📝 How to Use
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/c6576f1c-ac9f-4517-abda-a2f02b19f410) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. Open the application in your browser
+2. Upload one or more images using the drag-and-drop area or file selector
+3. Enter a descriptive prompt explaining how you want the image modified
+4. Click "Generate" and wait for the AI to process your request
+5. View and download the resulting transformed image
